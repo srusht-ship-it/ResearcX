@@ -6,7 +6,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from backend.pdf_parser import extract_text_from_pdf
-from backend.llm_engine import analyze_paper, compare_papers
+from backend.llm_engine import analyze_multiple_papers
+
 
 st.title("📚 AI Research Gap Finder")
 
@@ -16,23 +17,22 @@ uploaded_files = st.file_uploader(
     accept_multiple_files=True
 )
 
+
 if st.button("Analyze Papers"):
     if uploaded_files:
 
-        all_analyses = []
+        all_texts = []
 
         for file in uploaded_files:
             text = extract_text_from_pdf(file)
-            analysis = analyze_paper(text)
-            all_analyses.append(analysis)
+            all_texts.append(text)
 
-            st.markdown(f"## 📄 Analysis: {file.name}")
-            st.write(analysis)
+        st.info("Analyzing papers... please wait ⏳")
 
-        comparison = compare_papers(all_analyses)
+        final_output = analyze_multiple_papers(all_texts)
 
-        st.markdown("## 🔎 Cross-Paper Comparison")
-        st.write(comparison)
+        st.markdown("## 📊 Complete Research Analysis")
+        st.write(final_output)
 
     else:
         st.warning("Please upload at least one PDF.")

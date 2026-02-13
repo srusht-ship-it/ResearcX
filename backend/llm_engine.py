@@ -2,45 +2,42 @@ import google.generativeai as genai
 
 genai.configure(api_key="AIzaSyA3V0QZgfpPSB5LcllWqYCxS21QNnnOlxw")
 
-def analyze_paper(text):
+def analyze_multiple_papers(all_papers_text):
 
-    model = genai.GenerativeModel("gemini-2.5-flash")
+    model = genai.GenerativeModel("gemini-2.5-flash")  # use your working model
 
-    prompt = f"""
-    You are an academic research assistant.
+    combined_text = ""
 
-    From the research paper below extract:
-
-    1. Problem Statement
-    2. Methodology Used
-    3. Key Results
-    4. Limitations (explicit and implicit)
-
-    Return clearly structured headings.
-
-    Research Paper:
-    {text[:4000]}
-    """
-
-    response = model.generate_content(prompt)
-
-    return response.text
-
-def compare_papers(all_analyses):
-
-    model = genai.GenerativeModel("gemini-2.5-flash")
-
-    combined_text = "\n\n".join(all_analyses)
+    for i, text in enumerate(all_papers_text):
+        combined_text += f"\n\n----- PAPER {i+1} -----\n{text[:3000]}\n"
 
     prompt = f"""
     You are an academic research analyst.
 
-    Compare the following research papers.
+    Below are multiple research papers.
 
-    Identify:
-    1. Recurring weaknesses
-    2. Common limitations
-    3. Overlapping research patterns
+    Perform ALL of the following in a structured format:
+
+    1. For each paper:
+       - Problem Statement
+       - Methodology
+       - Key Results
+       - Limitations
+
+    2. Compare the papers:
+       - Identify recurring weaknesses
+       - Identify common limitations
+       - Highlight research overlaps
+
+    3. Based on comparison:
+       - Identify clear research gaps
+       - Explain why each gap exists
+
+    4. For each research gap:
+       - Suggest a research question
+       - Suggest possible methodology
+
+    Keep output clean and well-structured with headings.
 
     Papers:
     {combined_text}
