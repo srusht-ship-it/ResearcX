@@ -2,29 +2,31 @@ import streamlit as st
 import sys
 from pathlib import Path
 
-# Add backend directory to path
-backend_path = Path(__file__).parent.parent / "backend"
-sys.path.insert(0, str(backend_path))
+# Add parent directory to path
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from pdf_parser import extract_text_from_pdf
-
-st.set_page_config(page_title="AI Research Gap Finder")
+from backend.pdf_parser import extract_text_from_pdf
+from backend.llm_engine import summarize_paper
 
 st.title("📚 AI Research Gap Finder")
-st.write("Upload a research paper to extract text.")
 
-uploaded_file = st.file_uploader(
-    "Upload a PDF",
-    type=["pdf"]
-)
+uploaded_file = st.file_uploader("Upload a Research Paper (PDF)", type=["pdf"])
 
-if st.button("Extract Text"):
+if st.button("Analyze Paper"):
     if uploaded_file is not None:
+
+        # Extract text
         text = extract_text_from_pdf(uploaded_file)
 
-        st.success("Text extracted successfully!")
+        st.info("Generating summary... please wait ⏳")
 
-        # Print first 2000 characters (to avoid overload)
-        st.text_area("Extracted Text", text[:2000], height=400)
+        # Get summary from LLM
+        summary = summarize_paper(text)
+
+        st.success("Summary Generated Successfully!")
+
+        st.markdown("## 📌 Paper Summary")
+        st.write(summary)
+
     else:
         st.warning("Please upload a PDF file first.")
