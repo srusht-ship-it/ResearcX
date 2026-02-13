@@ -1,28 +1,30 @@
 import streamlit as st
+import sys
+from pathlib import Path
 
-# Page Title
-st.set_page_config(page_title="AI Research Gap Finder", layout="centered")
+# Add backend directory to path
+backend_path = Path(__file__).parent.parent / "backend"
+sys.path.insert(0, str(backend_path))
 
-st.title("📚ResearcX")
-st.write("Upload research papers and analyze research gaps.")
+from pdf_parser import extract_text_from_pdf
 
-# File Upload Section
-uploaded_files = st.file_uploader(
-    "Upload 2-3 Research Papers (PDF only)",
-    type=["pdf"],
-    accept_multiple_files=True
+st.set_page_config(page_title="AI Research Gap Finder")
+
+st.title("📚 AI Research Gap Finder")
+st.write("Upload a research paper to extract text.")
+
+uploaded_file = st.file_uploader(
+    "Upload a PDF",
+    type=["pdf"]
 )
 
-# Analyze Button
-if st.button("Analyze Papers"):
-    
-    if not uploaded_files:
-        st.warning("Please upload at least one PDF file.")
+if st.button("Extract Text"):
+    if uploaded_file is not None:
+        text = extract_text_from_pdf(uploaded_file)
+
+        st.success("Text extracted successfully!")
+
+        # Print first 2000 characters (to avoid overload)
+        st.text_area("Extracted Text", text[:2000], height=400)
     else:
-        st.success(f"{len(uploaded_files)} file(s) uploaded successfully!")
-
-        # Just display file names for now
-        for file in uploaded_files:
-            st.write("📄", file.name)
-
-        st.info("Analysis will be implemented next...")
+        st.warning("Please upload a PDF file first.")
