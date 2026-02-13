@@ -6,7 +6,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from backend.pdf_parser import extract_text_from_pdf
-from backend.llm_engine import summarize_paper
+from backend.llm_engine import analyze_paper
 
 st.title("📚 AI Research Gap Finder")
 
@@ -21,12 +21,13 @@ if st.button("Analyze Paper"):
         st.info("Generating summary... please wait ⏳")
 
         # Get summary from LLM
-        summary = summarize_paper(text)
+        analysis = analyze_paper(text)
+
 
         st.success("Summary Generated Successfully!")
 
-        st.markdown("## 📌 Paper Summary")
-        st.write(summary)
+        st.markdown("## 📌 Paper Analysis")
+        st.write(analysis)
 
     else:
         st.warning("Please upload a PDF file first.")
