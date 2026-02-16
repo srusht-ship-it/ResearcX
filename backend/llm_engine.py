@@ -1,52 +1,93 @@
-import google.genai as genai
+import os
+import json
+import google.generativeai as genai
+from dotenv import load_dotenv
 
-genai.configure(api_key="AIzaSyA3V0QZgfpPSB5LcllWqYCxS21QNnnOlxw")
+load_dotenv()
 
+
+
+# -------------------------------------------------
+# CONFIGURE GEMINI (Use environment variable)
+# -------------------------------------------------
+api_key = os.getenv("GEMINI_API_KEY")
+
+if not api_key:
+    raise ValueError("GEMINI_API_KEY not found. Set it as environment variable.")
+
+genai.configure(api_key=api_key)
+
+
+# -------------------------------------------------
+# MAIN FUNCTION
+# -------------------------------------------------
 def analyze_multiple_papers(all_papers_text):
 
-    model = genai.GenerativeModel("gemini-2.5-flash")  # use your working model
+    model = genai.GenerativeModel("gemini-2.5-flash")
 
+    # Combine truncated paper text
     combined_text = ""
-
     for i, text in enumerate(all_papers_text):
         combined_text += f"\n\n----- PAPER {i+1} -----\n{text[:3000]}\n"
 
+    # IMPORTANT: Escaped JSON braces using {{ }}
     prompt = f"""
-   Return output strictly in this format:
+You are an expert academic research analyst.
 
-=== PAPER-WISE ANALYSIS ===
-Paper 1:
-- Problem:
-- Methodology:
-- Results:
-- Limitations:
+Analyze the following research papers.
 
-Paper 2:
-...
+Return ONLY valid JSON.
+Do NOT include explanations.
+Do NOT include markdown.
+Do NOT wrap JSON in ```.
 
-=== CROSS PAPER COMPARISON ===
-- Recurring Weaknesses:
-- Common Limitations:
-- Overlaps:
+Return strictly in this structure:
 
-=== RESEARCH GAPS ===
-Gap 1:
-Reason:
-Evidence:
+{{
+  "papers": [
+    {{
+      "paper_number": 1,
+      "problem": "",
+      "methodology": "",
+      "results": "",
+      "limitations": ""
+    }}
+  ],
+  "comparison": {{
+    "recurring_weaknesses": "",
+    "common_limitations": "",
+    "overlaps": ""
+  }},
+  "research_gaps": [
+    {{
+      "gap_title": "",
+      "description": "",
+      "reason": "",
+      "novelty_score": "",
+      "impact_level": "",
+      "justification": "",
+      "research_question": "",
+      "suggested_methodology": ""
+    }}
+  ]
+}}
 
-Gap 2:
-...
+Instructions:
+1. Analyze EACH paper separately.
+2. Then compare all papers.
+3. Identify research gaps.
+4. For each gap assign novelty score (1-10).
+5. Assign impact level: Low / Medium / High.
 
-=== SUGGESTED RESEARCH QUESTIONS ===
-For Gap 1:
-- Research Question:
-- Suggested Methodology:
+Papers:
+{combined_text}
+"""
 
+    try:
+        response = model.generate_content(prompt)
+        return response.text.strip()
 
-    Papers:
-    {combined_text}
-    """
-
-    response = model.generate_content(prompt)
-
-    return response.text
+    except Exception as e:
+        return json.dumps({
+            "error": str(e)
+        })
