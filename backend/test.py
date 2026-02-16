@@ -1,4 +1,4 @@
-import google.generativeai as genai
+import google.genai as genai
 
 genai.configure(api_key="AIzaSyA3V0QZgfpPSB5LcllWqYCxS21QNnnOlxw")
 
