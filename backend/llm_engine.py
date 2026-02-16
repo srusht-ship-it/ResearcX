@@ -12,32 +12,36 @@ def analyze_multiple_papers(all_papers_text):
         combined_text += f"\n\n----- PAPER {i+1} -----\n{text[:3000]}\n"
 
     prompt = f"""
-    You are an academic research analyst.
+   Return output strictly in this format:
 
-    Below are multiple research papers.
+=== PAPER-WISE ANALYSIS ===
+Paper 1:
+- Problem:
+- Methodology:
+- Results:
+- Limitations:
 
-    Perform ALL of the following in a structured format:
+Paper 2:
+...
 
-    1. For each paper:
-       - Problem Statement
-       - Methodology
-       - Key Results
-       - Limitations
+=== CROSS PAPER COMPARISON ===
+- Recurring Weaknesses:
+- Common Limitations:
+- Overlaps:
 
-    2. Compare the papers:
-       - Identify recurring weaknesses
-       - Identify common limitations
-       - Highlight research overlaps
+=== RESEARCH GAPS ===
+Gap 1:
+Reason:
+Evidence:
 
-    3. Based on comparison:
-       - Identify clear research gaps
-       - Explain why each gap exists
+Gap 2:
+...
 
-    4. For each research gap:
-       - Suggest a research question
-       - Suggest possible methodology
+=== SUGGESTED RESEARCH QUESTIONS ===
+For Gap 1:
+- Research Question:
+- Suggested Methodology:
 
-    Keep output clean and well-structured with headings.
 
     Papers:
     {combined_text}
