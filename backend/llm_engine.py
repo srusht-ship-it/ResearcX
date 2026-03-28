@@ -1,48 +1,31 @@
 import os
-import json
 import google.generativeai as genai
 from dotenv import load_dotenv
 
+# Load API key
 load_dotenv()
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
-
-
-# -------------------------------------------------
-# CONFIGURE GEMINI (Use environment variable)
-# -------------------------------------------------
-api_key = os.getenv("GEMINI_API_KEY")
-
-if not api_key:
-    raise ValueError("GEMINI_API_KEY not found. Set it as environment variable.")
-
-genai.configure(api_key=api_key)
-
-
-# -------------------------------------------------
-# MAIN FUNCTION
-# -------------------------------------------------
 def analyze_multiple_papers(all_papers_text):
 
     model = genai.GenerativeModel("gemini-2.5-flash")
 
-    # Combine truncated paper text
+    # Reduce input size (important)
     combined_text = ""
     for i, text in enumerate(all_papers_text):
         combined_text += f"\n\n----- PAPER {i+1} -----\n{text[:1500]}\n"
 
-    # IMPORTANT: Escaped JSON braces using {{ }}
     prompt = f"""
 You are an expert research analyst.
 
 STRICT RULES:
 - Return ONLY valid JSON
-- Do NOT add explanations
-- Do NOT add markdown
-- Do NOT add ```json
-- Ensure ALL keys are present
+- No explanations
+- No markdown
+- No ```json
 - Do NOT return empty fields
 
-Return EXACTLY in this format:
+Return EXACT JSON:
 
 {{
   "papers": [
@@ -74,19 +57,13 @@ Return EXACTLY in this format:
 }}
 
 IMPORTANT:
-- Analyze ALL provided papers
-- Generate AT LEAST 2 research gaps
-- Do NOT return empty arrays
+- Analyze ALL papers
+- Generate at least 2 research gaps
+- Fill all fields
 
 Papers:
 {combined_text}
 """
 
-    try:
-        response = model.generate_content(prompt)
-        return response.text.strip()
-
-    except Exception as e:
-        return json.dumps({
-            "error": str(e)
-        })
+    response = model.generate_content(prompt)
+    return response.text.strip()

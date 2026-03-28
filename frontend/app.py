@@ -4,13 +4,13 @@ import json
 import re
 from pathlib import Path
 
-# Add backend to path
+# Add backend path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from backend.llm_engine import analyze_multiple_papers
 from backend.pdf_parser import extract_text_from_pdf
 
-# -------------------- PAGE CONFIG --------------------
+# ---------------- UI ----------------
 st.set_page_config(page_title="ResearcX AI", layout="centered")
 
 st.title("🧠 ResearcX AI – Research Gap Finder")
@@ -19,18 +19,16 @@ AI-powered system for:
 - Multi-document reasoning  
 - Research gap detection  
 - Innovation scoring  
-- Research question generation  
 """)
 st.markdown("---")
 
-# -------------------- FILE UPLOAD --------------------
 uploaded_files = st.file_uploader(
-    "📂 Upload Research Papers (PDF)",
+    "📂 Upload Research Papers",
     type="pdf",
     accept_multiple_files=True
 )
 
-# -------------------- ANALYZE BUTTON --------------------
+# ---------------- MAIN ----------------
 if st.button("🚀 Analyze Papers"):
 
     if uploaded_files:
@@ -41,86 +39,63 @@ if st.button("🚀 Analyze Papers"):
             text = extract_text_from_pdf(file)
             all_texts.append(text)
 
-        with st.spinner("🔎 Performing multi-document reasoning..."):
+        with st.spinner("🔎 Analyzing..."):
             final_output = analyze_multiple_papers(all_texts)
 
-        # -------------------- CLEAN + PARSE JSON --------------------
-        try:
-            cleaned_output = re.sub(r"```json|```", "", final_output).strip()
-            data = json.loads(cleaned_output)
-        except Exception as e:
-            st.error("⚠ JSON parsing failed. Showing raw output below:")
-            st.text(cleaned_output)
-            st.stop()
+        # DEBUG (important)
+        st.markdown("### 🔍 Raw Output (for debugging)")
+        st.text(final_output)
 
-        st.success("✅ Analysis Complete!")
+        # Clean JSON
+        try:
+            cleaned = re.sub(r"```json|```", "", final_output).strip()
+            data = json.loads(cleaned)
+        except:
+            st.error("⚠ JSON parsing failed")
+            st.stop()
 
         # Safe access
         papers = data.get("papers", [])
         comparison = data.get("comparison", {})
         gaps = data.get("research_gaps", [])
 
-        # ====================================================
-        # 📄 PAPER-WISE ANALYSIS
-        # ====================================================
+        st.success("✅ Analysis Complete!")
+
+        # ---------------- PAPERS ----------------
         st.markdown("## 📄 Paper-wise Analysis")
 
-        if papers:
-            for paper in papers:
-                with st.expander(f"Paper {paper.get('paper_number', '?')}"):
-                    st.markdown(f"**Problem:** {paper.get('problem', 'N/A')}")
-                    st.markdown(f"**Methodology:** {paper.get('methodology', 'N/A')}")
-                    st.markdown(f"**Results:** {paper.get('results', 'N/A')}")
-                    st.markdown(f"**Limitations:** {paper.get('limitations', 'N/A')}")
-        else:
-            st.warning("No paper data found.")
+        for paper in papers:
+            with st.expander(f"Paper {paper.get('paper_number')}"):
+                st.write("Problem:", paper.get("problem"))
+                st.write("Methodology:", paper.get("methodology"))
+                st.write("Results:", paper.get("results"))
+                st.write("Limitations:", paper.get("limitations"))
 
-        # ====================================================
-        # 🔎 CROSS PAPER INSIGHTS
-        # ====================================================
-        st.markdown("## 🔎 Cross-Paper Insights")
+        # ---------------- COMPARISON ----------------
+        st.markdown("## 🔎 Insights")
 
-        st.markdown(f"**Recurring Weaknesses:** {comparison.get('recurring_weaknesses', 'N/A')}")
-        st.markdown(f"**Common Limitations:** {comparison.get('common_limitations', 'N/A')}")
-        st.markdown(f"**Overlaps:** {comparison.get('overlaps', 'N/A')}")
+        st.write("Recurring Weaknesses:", comparison.get("recurring_weaknesses"))
+        st.write("Common Limitations:", comparison.get("common_limitations"))
+        st.write("Overlaps:", comparison.get("overlaps"))
 
-        # ====================================================
-        # 🚀 RESEARCH GAPS & INNOVATION EVALUATION
-        # ====================================================
-        st.markdown("## 🚀 Research Gaps & Innovation Evaluation")
+        # ---------------- GAPS ----------------
+        st.markdown("## 🚀 Research Gaps")
 
-        if gaps:
-            for gap in gaps:
-                st.markdown(f"### {gap.get('gap_title', 'Untitled Gap')}")
+        for gap in gaps:
+            st.markdown(f"### {gap.get('gap_title')}")
 
-                st.markdown(f"**Description:** {gap.get('description', 'N/A')}")
-                st.markdown(f"**Reason:** {gap.get('reason', 'N/A')}")
+            st.write("Description:", gap.get("description"))
+            st.write("Reason:", gap.get("reason"))
 
-                col1, col2 = st.columns(2)
+            col1, col2 = st.columns(2)
+            col1.metric("Novelty", gap.get("novelty_score"))
+            col2.metric("Impact", gap.get("impact_level"))
 
-                with col1:
-                    st.metric("Novelty Score", gap.get("novelty_score", "N/A"))
+            st.write("Justification:", gap.get("justification"))
+            st.write("Research Question:", gap.get("research_question"))
+            st.write("Methodology:", gap.get("suggested_methodology"))
 
-                with col2:
-                    st.metric("Impact Level", gap.get("impact_level", "N/A"))
-
-                st.markdown(f"**Justification:** {gap.get('justification', 'N/A')}")
-                st.markdown(f"**Research Question:** {gap.get('research_question', 'N/A')}")
-                st.markdown(f"**Suggested Methodology:** {gap.get('suggested_methodology', 'N/A')}")
-                
-                st.markdown("---")
-        else:
-            st.warning("No research gaps found.")
-
-        # ====================================================
-        # 📥 DOWNLOAD BUTTON
-        # ====================================================
-        st.download_button(
-            label="📥 Download Full Analysis (JSON)",
-            data=json.dumps(data, indent=4),
-            file_name="research_gap_analysis.json",
-            mime="application/json"
-        )
+            st.markdown("---")
 
     else:
-        st.warning("⚠ Please upload at least one PDF.")
+        st.warning("Upload at least one PDF")
