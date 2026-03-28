@@ -28,56 +28,55 @@ def analyze_multiple_papers(all_papers_text):
     # Combine truncated paper text
     combined_text = ""
     for i, text in enumerate(all_papers_text):
-        combined_text += f"\n\n----- PAPER {i+1} -----\n{text[:3000]}\n"
+        combined_text += f"\n\n----- PAPER {i+1} -----\n{text[:1500]}\n"
 
     # IMPORTANT: Escaped JSON braces using {{ }}
     prompt = f"""
-You are an expert academic research analyst.
+You are an expert research analyst.
 
-Analyze the following research papers.
+STRICT RULES:
+- Return ONLY valid JSON
+- Do NOT add explanations
+- Do NOT add markdown
+- Do NOT add ```json
+- Ensure ALL keys are present
+- Do NOT return empty fields
 
-Return ONLY valid JSON.
-Do NOT include explanations.
-Do NOT include markdown.
-Do NOT wrap JSON in ```.
-
-Return strictly in this structure:
+Return EXACTLY in this format:
 
 {{
   "papers": [
     {{
       "paper_number": 1,
-      "problem": "",
-      "methodology": "",
-      "results": "",
-      "limitations": ""
+      "problem": "text",
+      "methodology": "text",
+      "results": "text",
+      "limitations": "text"
     }}
   ],
   "comparison": {{
-    "recurring_weaknesses": "",
-    "common_limitations": "",
-    "overlaps": ""
+    "recurring_weaknesses": "text",
+    "common_limitations": "text",
+    "overlaps": "text"
   }},
   "research_gaps": [
     {{
-      "gap_title": "",
-      "description": "",
-      "reason": "",
-      "novelty_score": "",
-      "impact_level": "",
-      "justification": "",
-      "research_question": "",
-      "suggested_methodology": ""
+      "gap_title": "text",
+      "description": "text",
+      "reason": "text",
+      "novelty_score": "1-10",
+      "impact_level": "Low/Medium/High",
+      "justification": "text",
+      "research_question": "text",
+      "suggested_methodology": "text"
     }}
   ]
 }}
 
-Instructions:
-1. Analyze EACH paper separately.
-2. Then compare all papers.
-3. Identify research gaps.
-4. For each gap assign novelty score (1-10).
-5. Assign impact level: Low / Medium / High.
+IMPORTANT:
+- Analyze ALL provided papers
+- Generate AT LEAST 2 research gaps
+- Do NOT return empty arrays
 
 Papers:
 {combined_text}

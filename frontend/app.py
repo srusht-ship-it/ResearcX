@@ -1,6 +1,7 @@
 import streamlit as st
 import sys
 import json
+import re
 from pathlib import Path
 
 # Add backend to path
@@ -43,60 +44,73 @@ if st.button("🚀 Analyze Papers"):
         with st.spinner("🔎 Performing multi-document reasoning..."):
             final_output = analyze_multiple_papers(all_texts)
 
-        # -------------------- PARSE JSON --------------------
+        # -------------------- CLEAN + PARSE JSON --------------------
         try:
-            data = json.loads(final_output)
-        except:
-            st.error("⚠ Model output formatting error. Try again.")
+            cleaned_output = re.sub(r"```json|```", "", final_output).strip()
+            data = json.loads(cleaned_output)
+        except Exception as e:
+            st.error("⚠ JSON parsing failed. Showing raw output below:")
+            st.text(cleaned_output)
             st.stop()
 
         st.success("✅ Analysis Complete!")
+
+        # Safe access
+        papers = data.get("papers", [])
+        comparison = data.get("comparison", {})
+        gaps = data.get("research_gaps", [])
 
         # ====================================================
         # 📄 PAPER-WISE ANALYSIS
         # ====================================================
         st.markdown("## 📄 Paper-wise Analysis")
 
-        for paper in data["papers"]:
-            with st.expander(f"Paper {paper['paper_number']}"):
-                st.markdown(f"**Problem:** {paper['problem']}")
-                st.markdown(f"**Methodology:** {paper['methodology']}")
-                st.markdown(f"**Results:** {paper['results']}")
-                st.markdown(f"**Limitations:** {paper['limitations']}")
+        if papers:
+            for paper in papers:
+                with st.expander(f"Paper {paper.get('paper_number', '?')}"):
+                    st.markdown(f"**Problem:** {paper.get('problem', 'N/A')}")
+                    st.markdown(f"**Methodology:** {paper.get('methodology', 'N/A')}")
+                    st.markdown(f"**Results:** {paper.get('results', 'N/A')}")
+                    st.markdown(f"**Limitations:** {paper.get('limitations', 'N/A')}")
+        else:
+            st.warning("No paper data found.")
 
         # ====================================================
         # 🔎 CROSS PAPER INSIGHTS
         # ====================================================
         st.markdown("## 🔎 Cross-Paper Insights")
 
-        st.markdown(f"**Recurring Weaknesses:** {data['comparison']['recurring_weaknesses']}")
-        st.markdown(f"**Common Limitations:** {data['comparison']['common_limitations']}")
-        st.markdown(f"**Overlaps:** {data['comparison']['overlaps']}")
+        st.markdown(f"**Recurring Weaknesses:** {comparison.get('recurring_weaknesses', 'N/A')}")
+        st.markdown(f"**Common Limitations:** {comparison.get('common_limitations', 'N/A')}")
+        st.markdown(f"**Overlaps:** {comparison.get('overlaps', 'N/A')}")
 
         # ====================================================
         # 🚀 RESEARCH GAPS & INNOVATION EVALUATION
         # ====================================================
         st.markdown("## 🚀 Research Gaps & Innovation Evaluation")
 
-        for gap in data["research_gaps"]:
-            st.markdown(f"### {gap['gap_title']}")
+        if gaps:
+            for gap in gaps:
+                st.markdown(f"### {gap.get('gap_title', 'Untitled Gap')}")
 
-            st.markdown(f"**Description:** {gap['description']}")
-            st.markdown(f"**Reason:** {gap['reason']}")
+                st.markdown(f"**Description:** {gap.get('description', 'N/A')}")
+                st.markdown(f"**Reason:** {gap.get('reason', 'N/A')}")
 
-            col1, col2 = st.columns(2)
+                col1, col2 = st.columns(2)
 
-            with col1:
-                st.metric("Novelty Score", gap["novelty_score"])
+                with col1:
+                    st.metric("Novelty Score", gap.get("novelty_score", "N/A"))
 
-            with col2:
-                st.metric("Impact Level", gap["impact_level"])
+                with col2:
+                    st.metric("Impact Level", gap.get("impact_level", "N/A"))
 
-            st.markdown(f"**Justification:** {gap['justification']}")
-            st.markdown(f"**Research Question:** {gap['research_question']}")
-            st.markdown(f"**Suggested Methodology:** {gap['suggested_methodology']}")
-
-            st.markdown("---")
+                st.markdown(f"**Justification:** {gap.get('justification', 'N/A')}")
+                st.markdown(f"**Research Question:** {gap.get('research_question', 'N/A')}")
+                st.markdown(f"**Suggested Methodology:** {gap.get('suggested_methodology', 'N/A')}")
+                
+                st.markdown("---")
+        else:
+            st.warning("No research gaps found.")
 
         # ====================================================
         # 📥 DOWNLOAD BUTTON
